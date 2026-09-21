@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCatalog } from '../context/CatalogContext';
 import { Search, ShoppingBag, Plus, Minus, Trash2, X, MessageCircle, Image as ImageIcon } from 'lucide-react';
+import { supabase } from '../supabaseClient'; // Mengimpor koneksi Supabase
 
 export default function CustomerView({ isCartOpen, setIsCartOpen }) {
   const { categories, menuItems, cart, addToCart, updateCartQty, removeFromCart, whatsappNumber } = useCatalog();
@@ -21,13 +22,32 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
   const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
-  const handleCheckoutWhatsApp = () => {
+  const handleCheckoutWhatsApp = async () => {
     if (cart.length === 0) return;
     if (!customerName.trim()) {
       alert('Mohon isi nama Anda terlebih dahulu sebelum memesan.');
       return;
     }
 
+    // 1. Catat riwayat pesanan (history) secara otomatis ke database Supabase
+    try {
+      const { error } = await supabase.from('orders').insert([
+        {
+          customer_name: customerName,
+          customer_note: customerNote || '-',
+          items: cart, // Menyimpan detail daftar belanjaan
+          total_price: subtotal
+        }
+      ]);
+
+      if (error) {
+        console.error('Gagal mencatat history ke Supabase:', error.message);
+      }
+    } catch (err) {
+      console.error('Terjadi kesalahan koneksi:', err);
+    }
+
+    // 2. Buat format pesan WhatsApp
     let message = `Halo Kak, saya *${customerName}* ingin memesan:\n\n`;
     cart.forEach((item, index) => {
       message += `${index + 1}. ${item.name} (${item.qty}x) - Rp ${(item.price * item.qty).toLocaleString('id-ID')}\n`;
