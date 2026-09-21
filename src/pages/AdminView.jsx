@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCatalog } from '../context/CatalogContext';
-import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon, ClipboardList, Download } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 export default function AdminView() {
   const { 
@@ -18,6 +19,7 @@ export default function AdminView() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [orders, setOrders] = useState([]);
 
   const [menuForm, setMenuForm] = useState({
     name: '',
@@ -28,6 +30,61 @@ export default function AdminView() {
     badge: '',
     isAvailable: true
   });
+
+  // Ambil data riwayat pesanan dari Supabase saat tab 'orders' dibuka atau dimuat
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Gagal mengambil data pesanan:', error.message);
+      } else {
+        setOrders(data || []);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
+  // Fungsi untuk download data pesanan ke Excel (.csv)
+  const downloadExcel = () => {
+    if (orders.length === 0) {
+      alert('Belum ada riwayat pesanan untuk didownload.');
+      return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID,Waktu Pesan,Nama Pemesan,Catatan,Total Harga,Detail Item\n";
+
+    orders.forEach(order => {
+      const date = new Date(order.created_at).toLocaleString('id-ID');
+      const itemsString = order.items.map(i => `${i.name} (${i.qty}x)`).join('; ');
+      const row = [
+        order.id,
+        `"${date}"`,
+        `"${order.customer_name}"`,
+        `"${order.customer_note || '-'}"`,
+        order.total_price,
+        `"${itemsString}"`
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Riwayat_Pesanan_DapurMamaArkan_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleCatSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +103,6 @@ export default function AdminView() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Batasi ukuran file maksimal 1MB agar memori localStorage tidak penuh
       if (file.size > 1024 * 1024) {
         alert('Ukuran foto terlalu besar! Maksimal 1MB.');
         return;
@@ -130,24 +186,30 @@ export default function AdminView() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-800">Admin Panel Katalog</h2>
-            <p className="text-slate-500 text-sm mt-1">Kelola menu, kategori, dan nomor WhatsApp pesanan sesuka Anda.</p>
+            <p className="text-slate-500 text-sm mt-1">Kelola menu, kategori, riwayat pesanan, dan pengaturan toko.</p>
           </div>
-          <div className="flex bg-slate-100 p-1 rounded-2xl w-full sm:w-auto">
+          <div className="flex bg-slate-100 p-1 rounded-2xl w-full sm:w-auto overflow-x-auto">
             <button
               onClick={() => setActiveTab('menu')}
-              className={`flex-1 sm:flex-initial px-5 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'menu' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'menu' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Daftar Menu
             </button>
             <button
               onClick={() => setActiveTab('categories')}
-              className={`flex-1 sm:flex-initial px-5 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'categories' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'categories' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Kategori
             </button>
             <button
+              onClick={() => { setActiveTab('orders'); fetchOrders(); }}
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'orders' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Riwayat Pesanan
+            </button>
+            <button
               onClick={() => setActiveTab('settings')}
-              className={`flex-1 sm:flex-initial px-5 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'settings' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'settings' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
             >
               Pengaturan
             </button>
@@ -246,6 +308,72 @@ export default function AdminView() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'orders' && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Riwayat Pesanan Masuk ({orders.length})</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Daftar pelanggan yang melakukan checkout via WhatsApp.</p>
+            </div>
+            <button
+              onClick={downloadExcel}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-2xl shadow-md shadow-emerald-600/20 text-sm flex items-center space-x-2 transition"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Excel (CSV)</span>
+            </button>
+          </div>
+
+          {orders.length === 0 ? (
+            <div className="text-center py-16 text-slate-400">
+              <ClipboardList className="w-12 h-12 mx-auto mb-3 stroke-1 text-slate-300" />
+              <p className="text-sm font-medium">Belum ada riwayat pesanan yang tercatat.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 text-xs uppercase tracking-wider">
+                    <th className="py-3 px-4 font-bold">Waktu</th>
+                    <th className="py-3 px-4 font-bold">Nama Pemesan</th>
+                    <th className="py-3 px-4 font-bold">Menu Pesanan</th>
+                    <th className="py-3 px-4 font-bold">Catatan</th>
+                    <th className="py-3 px-4 font-bold text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {orders.map(order => (
+                    <tr key={order.id} className="hover:bg-slate-50/50">
+                      <td className="py-4 px-4 text-xs text-slate-500 whitespace-nowrap">
+                        {new Date(order.created_at).toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
+                        {order.customer_name}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600">
+                        <ul className="space-y-1">
+                          {order.items.map((item, idx) => (
+                            <li key={idx} className="text-xs">
+                              • <span className="font-semibold">{item.name}</span> ({item.qty}x)
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="py-4 px-4 text-xs text-slate-500 max-w-xs truncate">
+                        {order.customer_note || '-'}
+                      </td>
+                      <td className="py-4 px-4 text-right font-extrabold text-orange-600 whitespace-nowrap">
+                        Rp {order.total_price.toLocaleString('id-ID')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
