@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCatalog } from '../context/CatalogContext';
 import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon, ClipboardList, Download } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import * as XLSX from 'xlsx';
 
 export default function AdminView() {
   const { 
@@ -53,37 +54,44 @@ export default function AdminView() {
     }
   };
 
-  // Fungsi untuk download data pesanan ke Excel (.csv)
+  // Fungsi untuk download data pesanan ke file Excel (.xlsx) yang rapi
   const downloadExcel = () => {
     if (orders.length === 0) {
       alert('Belum ada riwayat pesanan untuk didownload.');
       return;
     }
 
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "ID,Waktu Pesan,Nama Pemesan,Catatan,Total Harga,Detail Item\n";
-
-    orders.forEach(order => {
+    const excelData = orders.map((order, index) => {
       const date = new Date(order.created_at).toLocaleString('id-ID');
-      const itemsString = order.items.map(i => `${i.name} (${i.qty}x)`).join('; ');
-      const row = [
-        order.id,
-        `"${date}"`,
-        `"${order.customer_name}"`,
-        `"${order.customer_note || '-'}"`,
-        order.total_price,
-        `"${itemsString}"`
-      ];
-      csvContent += row.join(",") + "\n";
+      const itemsString = order.items.map(i => `${i.name} (${i.qty}x)`).join(', ');
+      
+      return {
+        'No': index + 1,
+        'ID Pesanan': order.id,
+        'Waktu Pesan': date,
+        'Nama Pemesan': order.customer_name,
+        'Detail Menu Pesanan': itemsString,
+        'Catatan Pelanggan': order.customer_note || '-',
+        'Total Harga (Rp)': order.total_price
+      };
     });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Riwayat_Pesanan_DapurMamaArkan_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Pesanan");
+
+    // Atur lebar kolom agar rapi dan tidak terpotong
+    worksheet['!cols'] = [
+      { wch: 5 },  // No
+      { wch: 15 }, // ID Pesanan
+      { wch: 20 }, // Waktu Pesan
+      { wch: 20 }, // Nama Pemesan
+      { wch: 40 }, // Detail Menu Pesanan
+      { wch: 25 }, // Catatan Pelanggan
+      { wch: 18 }  // Total Harga
+    ];
+
+    XLSX.writeFile(workbook, `Riwayat_Pesanan_DapurMamaArkan_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   const handleCatSubmit = (e) => {
@@ -323,7 +331,7 @@ export default function AdminView() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-2xl shadow-md shadow-emerald-600/20 text-sm flex items-center space-x-2 transition"
             >
               <Download className="w-4 h-4" />
-              <span>Download Excel (CSV)</span>
+              <span>Download Excel (.xlsx)</span>
             </button>
           </div>
 
