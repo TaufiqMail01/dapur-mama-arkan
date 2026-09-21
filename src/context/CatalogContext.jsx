@@ -10,6 +10,16 @@ export function CatalogProvider({ children }) {
   const [whatsappNumber, setWhatsappNumber] = useState('6283875535702');
   const [adminPassword, setAdminPassword] = useState('2409');
 
+  // State untuk Nama Toko & Tulisan Kecil di Bawahnya (tersimpan di localStorage)
+  const [storeName, setStoreName] = useState(() => localStorage.getItem('dapur_store_name') || 'Dapur Mama Arkan');
+  const [storeSubtitle, setStoreSubtitle] = useState(() => localStorage.getItem('dapur_store_subtitle') || 'Katalog Makanan & Minuman');
+
+  // Simpan perubahan nama toko otomatis ke localStorage
+  useEffect(() => {
+    localStorage.setItem('dapur_store_name', storeName);
+    localStorage.setItem('dapur_store_subtitle', storeSubtitle);
+  }, [storeName, storeSubtitle]);
+
   // Ambil data awal dan pasang listener Realtime Supabase
   useEffect(() => {
     fetchInitialData();
@@ -141,16 +151,16 @@ export function CatalogProvider({ children }) {
   };
 
   // Fungsi CRUD Kategori dengan Supabase
-const addCategory = async (name) => {
-  const newCat = { id: Date.now().toString(), name };
-  const { error } = await supabase.from('categories').insert([newCat]);
-  if (error) {
-    console.error('Gagal menambah kategori:', error.message);
-    alert('Gagal menyimpan ke database: ' + error.message); 
-  } else {
-    fetchInitialData();
-  }
-};
+  const addCategory = async (name) => {
+    const newCat = { id: Date.now().toString(), name };
+    const { error } = await supabase.from('categories').insert([newCat]);
+    if (error) {
+      console.error('Gagal menambah kategori:', error.message);
+      alert('Gagal menyimpan ke database: ' + error.message); 
+    } else {
+      fetchInitialData();
+    }
+  };
 
   const editCategory = async (id, name) => {
     const { error } = await supabase.from('categories').update({ name }).eq('id', id);
@@ -173,7 +183,8 @@ const addCategory = async (name) => {
   return (
     <CatalogContext.Provider value={{
       categories, menuItems, cart, whatsappNumber, setWhatsappNumber,
-      adminPassword, setAdminPassword, addToCart, updateCartQty, removeFromCart,
+      adminPassword, setAdminPassword, storeName, setStoreName,
+      storeSubtitle, setStoreSubtitle, addToCart, updateCartQty, removeFromCart,
       addCategory, editCategory, deleteCategory, addMenuItem, editMenuItem, deleteMenuItem
     }}>
       {children}

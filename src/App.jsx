@@ -16,7 +16,8 @@ function MainApp() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const { adminPassword, cart } = useCatalog();
+  // Ambil state toko dan fungsi dari CatalogContext
+  const { adminPassword, cart, storeName, storeSubtitle } = useCatalog();
   const totalCartQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
   // Fungsi untuk memperbarui waktu aktivitas terakhir
@@ -26,7 +27,7 @@ function MainApp() {
     }
   };
 
-  // 2. Timeout (Inaktivitas) = Auto Logout setelah 15 menit tidak ada aktivitas mouse/keyboard
+  // 2. Timeout (Inaktivitas) = Auto Logout setelah waktu habis tanpa aktivitas
   useEffect(() => {
     if (!isAdminLoggedIn) return;
 
@@ -91,8 +92,10 @@ function MainApp() {
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-extrabold text-slate-800 text-lg leading-tight">Dapur Mama Arkan</h1>
-              <p className="text-xs text-slate-400 font-medium">Katalog Makanan & Minuman</p>
+              {/* Nama Toko Dinamis dari Pengaturan Admin */}
+              <h1 className="font-extrabold text-slate-800 text-lg leading-tight">{storeName}</h1>
+              {/* Tulisan Kecil di Bawah Dinamis dari Pengaturan Admin */}
+              <p className="text-xs text-slate-400 font-medium">{storeSubtitle}</p>
             </div>
           </div>
 

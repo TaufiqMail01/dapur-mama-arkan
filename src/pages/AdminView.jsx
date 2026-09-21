@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCatalog } from '../context/CatalogContext';
-import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon, ClipboardList, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon, ClipboardList, Download, Store } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import * as XLSX from 'xlsx';
 
@@ -8,6 +8,8 @@ export default function AdminView() {
   const { 
     categories, menuItems, whatsappNumber, setWhatsappNumber,
     adminPassword, setAdminPassword,
+    storeName, setStoreName,
+    storeSubtitle, setStoreSubtitle,
     addCategory, editCategory, deleteCategory,
     addMenuItem, editMenuItem, deleteMenuItem 
   } = useCatalog();
@@ -21,6 +23,10 @@ export default function AdminView() {
   const [editingMenu, setEditingMenu] = useState(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [orders, setOrders] = useState([]);
+
+  // State lokal untuk form pengaturan profil toko
+  const [storeNameInput, setStoreNameInput] = useState(storeName);
+  const [storeSubtitleInput, setStoreSubtitleInput] = useState(storeSubtitle);
 
   const [menuForm, setMenuForm] = useState({
     name: '',
@@ -91,7 +97,7 @@ export default function AdminView() {
       { wch: 18 }  // Total Harga
     ];
 
-    XLSX.writeFile(workbook, `Riwayat_Pesanan_DapurMamaArkan_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(workbook, `Riwayat_Pesanan_${storeName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
   const handleCatSubmit = (e) => {
@@ -150,6 +156,14 @@ export default function AdminView() {
       isAvailable: true
     });
     setIsMenuModalOpen(false);
+  };
+
+  const handleUpdateStoreInfo = (e) => {
+    e.preventDefault();
+    if (!storeNameInput.trim()) return;
+    setStoreName(storeNameInput);
+    setStoreSubtitle(storeSubtitleInput);
+    alert('Informasi toko berhasil diperbarui!');
   };
 
   const handleUpdatePassword = (e) => {
@@ -387,6 +401,44 @@ export default function AdminView() {
 
       {activeTab === 'settings' && (
         <div className="space-y-6 max-w-xl">
+          {/* Pengaturan Profil Toko */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center space-x-2">
+              <Store className="w-5 h-5 text-orange-600" />
+              <span>Pengaturan Profil Toko</span>
+            </h3>
+            <form onSubmit={handleUpdateStoreInfo} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nama Toko</label>
+                <input
+                  type="text"
+                  value={storeNameInput}
+                  onChange={(e) => setStoreNameInput(e.target.value)}
+                  placeholder="Contoh: Dapur Mama Arkan"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tulisan Kecil di Bawah Nama Toko</label>
+                <input
+                  type="text"
+                  value={storeSubtitleInput}
+                  onChange={(e) => setStoreSubtitleInput(e.target.value)}
+                  placeholder="Contoh: Katalog Makanan & Minuman"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-2.5 rounded-2xl text-sm transition shadow-md shadow-orange-600/20"
+              >
+                Simpan Profil Toko
+              </button>
+            </form>
+          </div>
+
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Pengaturan WhatsApp Checkout</h3>
             <div className="space-y-4">
