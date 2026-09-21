@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCatalog } from '../context/CatalogContext';
-import { Plus, Edit, Trash2, FolderPlus, Phone, Lock } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderPlus, Phone, Lock, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminView() {
   const { 
@@ -40,6 +40,23 @@ export default function AdminView() {
     setCatNameInput('');
     setEditingCat(null);
     setIsCatModalOpen(false);
+  };
+
+  // Fungsi untuk menangani upload file foto dari HP / Laptop
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Batasi ukuran file maksimal 1MB agar memori localStorage tidak penuh
+      if (file.size > 1024 * 1024) {
+        alert('Ukuran foto terlalu besar! Maksimal 1MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMenuForm({ ...menuForm, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleMenuSubmit = (e) => {
@@ -85,7 +102,7 @@ export default function AdminView() {
       name: '',
       categoryId: categories[0]?.id || '',
       price: '',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+      image: '',
       description: '',
       badge: '',
       isAvailable: true
@@ -99,7 +116,7 @@ export default function AdminView() {
       name: item.name,
       categoryId: item.categoryId,
       price: item.price,
-      image: item.image,
+      image: item.image || '',
       description: item.description,
       badge: item.badge || '',
       isAvailable: item.isAvailable
@@ -156,8 +173,15 @@ export default function AdminView() {
               const cat = categories.find(c => c.id === item.categoryId);
               return (
                 <div key={item.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="relative h-44 bg-slate-100">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <div className="relative h-44 bg-slate-100 flex items-center justify-center">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain p-2" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-400">
+                        <ImageIcon className="w-8 h-8 mb-1 stroke-1" />
+                        <span className="text-xs">Tanpa Foto</span>
+                      </div>
+                    )}
                     <span className="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-full">
                       {cat?.name || 'Tanpa Kategori'}
                     </span>
@@ -341,16 +365,27 @@ export default function AdminView() {
                   />
                 </div>
               </div>
+
+              {/* Input Upload Foto dari HP/Laptop */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">URL Gambar (Foto)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Upload Foto Menu dari HP / Laptop</label>
                 <input
-                  type="text"
-                  value={menuForm.image}
-                  onChange={(e) => setMenuForm({...menuForm, image: e.target.value})}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer bg-slate-50 border border-slate-200 rounded-xl"
                 />
+                {menuForm.image && (
+                  <div className="mt-2.5 flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+                    <img src={menuForm.image} alt="Preview" className="w-12 h-12 object-contain rounded-xl bg-white border p-1" />
+                    <div>
+                      <p className="text-xs font-bold text-emerald-600">✓ Foto berhasil dimuat</p>
+                      <p className="text-[10px] text-slate-400">Siap disimpan ke sistem</p>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Badge (Opsional)</label>

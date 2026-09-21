@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCatalog } from '../context/CatalogContext';
-import { Search, ShoppingBag, Plus, Minus, Trash2, X, MessageCircle } from 'lucide-react';
+import { Search, ShoppingBag, Plus, Minus, Trash2, X, MessageCircle, Image as ImageIcon } from 'lucide-react';
 
 export default function CustomerView({ isCartOpen, setIsCartOpen }) {
   const { categories, menuItems, cart, addToCart, updateCartQty, removeFromCart, whatsappNumber } = useCatalog();
@@ -101,12 +101,19 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
             <div key={item.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition group">
-              <div className="relative h-48 overflow-hidden bg-slate-100 cursor-pointer" onClick={() => setSelectedItem(item)}>
-                <img 
-                  src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'} 
-                  alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                />
+              <div className="relative h-48 overflow-hidden bg-slate-100 flex items-center justify-center cursor-pointer" onClick={() => setSelectedItem(item)}>
+                {item.image ? (
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="w-full h-full object-contain p-2 group-hover:scale-105 transition duration-300"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <ImageIcon className="w-10 h-10 mb-1 stroke-1" />
+                    <span className="text-xs">Belum ada foto</span>
+                  </div>
+                )}
                 {item.badge && (
                   <span className="absolute top-3 left-3 bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
                     {item.badge}
@@ -152,9 +159,16 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
       {selectedItem && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
-            <div className="relative h-64 bg-slate-100">
-              <img src={selectedItem.image} alt={selectedItem.name} className="w-full h-full object-cover" />
-              <button onClick={() => setSelectedItem(null)} className="absolute top-3 right-3 bg-white/80 hover:bg-white text-slate-700 p-2 rounded-full shadow transition">
+            <div className="relative h-64 bg-slate-100 flex items-center justify-center">
+              {selectedItem.image ? (
+                <img src={selectedItem.image} alt={selectedItem.name} className="w-full h-full object-contain p-2" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400">
+                  <ImageIcon className="w-12 h-12 mb-1 stroke-1" />
+                  <span className="text-xs">Belum ada foto</span>
+                </div>
+              )}
+              <button onClick={() => setSelectedItem(null)} className="absolute top-3 right-3 bg-white/85 hover:bg-white text-slate-700 p-2 rounded-full shadow transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -163,7 +177,7 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
                 <h3 className="text-2xl font-bold text-slate-800">{selectedItem.name}</h3>
                 <span className="text-xl font-extrabold text-orange-600">Rp {selectedItem.price.toLocaleString('id-ID')}</span>
               </div>
-              <p className="text-slate-600 text-sm leading-relaxed mb-6">{selectedItem.description}</p>
+              <p className="text-slate-600 text-sm leading-relaxed mb-6">{selectedItem.description || 'Tidak ada deskripsi.'}</p>
               <button
                 onClick={() => { addToCart(selectedItem); setSelectedItem(null); }}
                 disabled={!selectedItem.isAvailable}
@@ -204,7 +218,13 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
                     {cart.map(item => (
                       <div key={item.id} className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                         <div className="flex items-center space-x-3">
-                          <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover" />
+                          <div className="w-14 h-14 rounded-xl bg-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {item.image ? (
+                              <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
+                            ) : (
+                              <ImageIcon className="w-6 h-6 text-slate-400" />
+                            )}
+                          </div>
                           <div>
                             <h4 className="font-bold text-slate-800 text-sm">{item.name}</h4>
                             <p className="text-xs text-orange-600 font-semibold mt-0.5">Rp {item.price.toLocaleString('id-ID')}</p>
