@@ -141,15 +141,16 @@ export function CatalogProvider({ children }) {
   };
 
   // Fungsi CRUD Kategori dengan Supabase
-  const addCategory = async (name) => {
-    const newCat = { id: Date.now().toString(), name };
-    const { error } = await supabase.from('categories').insert([newCat]);
-    if (error) {
-      console.error('Gagal menambah kategori:', error.message);
-    } else {
-      fetchInitialData();
-    }
-  };
+const addCategory = async (name) => {
+  const newCat = { id: Date.now().toString(), name };
+  const { error } = await supabase.from('categories').insert([newCat]);
+  if (error) {
+    console.error('Gagal menambah kategori:', error.message);
+    alert('Gagal menyimpan ke database: ' + error.message); 
+  } else {
+    fetchInitialData();
+  }
+};
 
   const editCategory = async (id, name) => {
     const { error } = await supabase.from('categories').update({ name }).eq('id', id);
