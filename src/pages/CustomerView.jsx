@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCatalog } from '../context/CatalogContext';
-import { Search, ShoppingBag, Plus, Minus, Trash2, X, MessageCircle, Image as ImageIcon } from 'lucide-react';
-import { supabase } from '../supabaseClient'; // Mengimpor koneksi Supabase
+import { Search, ShoppingBag, Plus, Minus, Trash2, X, MessageCircle, Image as ImageIcon, Store } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 export default function CustomerView({ isCartOpen, setIsCartOpen }) {
   const { categories, menuItems, cart, addToCart, updateCartQty, removeFromCart, whatsappNumber } = useCatalog();
@@ -35,7 +35,7 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
         {
           customer_name: customerName,
           customer_note: customerNote || '-',
-          items: cart, // Menyimpan detail daftar belanjaan
+          items: cart,
           total_price: subtotal
         }
       ]);
@@ -64,14 +64,31 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 sm:p-10 text-white shadow-xl shadow-orange-500/10 mb-8 flex flex-col md:flex-row items-center justify-between">
-        <div className="mb-6 md:mb-0 max-w-lg">
-          <span className="bg-white/20 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Pesan Makanan Online</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold mt-3 mb-2">Nikmati Hidangan Lezat Setiap Hari</h2>
-          <p className="text-orange-100 text-sm sm:text-base">Pilih menu favoritmu, masukkan keranjang, dan langsung pesan via WhatsApp dengan mudah.</p>
+      {/* Hero Banner dengan Efek Watermark */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 rounded-3xl p-6 sm:p-10 text-white shadow-xl shadow-orange-500/10 mb-8 flex flex-col md:flex-row items-center justify-between">
+        {/* Efek Watermark / Pattern Dekoratif di Background */}
+        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none select-none">
+          <ShoppingBag className="w-64 h-64 text-white" />
         </div>
-        <div className="w-full md:w-auto">
+        <div className="absolute right-32 -top-10 opacity-10 pointer-events-none select-none">
+          <Store className="w-48 h-48 text-white" />
+        </div>
+
+        {/* Konten Teks */}
+        <div className="mb-6 md:mb-0 max-w-lg relative z-10">
+          <span className="bg-white/20 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">
+            Pesan Makanan Online
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mt-3 mb-2 tracking-tight">
+            Nikmati Hidangan Lezat Setiap Hari
+          </h2>
+          <p className="text-orange-100 text-sm sm:text-base leading-relaxed">
+            Pilih menu favoritmu, masukkan keranjang, dan langsung pesan via WhatsApp dengan mudah.
+          </p>
+        </div>
+
+        {/* Kotak Pencarian */}
+        <div className="w-full md:w-auto relative z-10">
           <div className="relative">
             <Search className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
             <input
@@ -79,7 +96,7 @@ export default function CustomerView({ isCartOpen, setIsCartOpen }) {
               placeholder="Cari makanan atau minuman..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-80 pl-11 pr-4 py-3 bg-white text-slate-800 rounded-2xl shadow-md focus:outline-none focus:ring-2 focus:ring-orange-300 placeholder:text-slate-400 text-sm"
+              className="w-full md:w-80 pl-11 pr-4 py-3 bg-white text-slate-800 rounded-2xl shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300 placeholder:text-slate-400 text-sm transition"
             />
           </div>
         </div>
