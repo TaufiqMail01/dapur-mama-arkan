@@ -48,7 +48,7 @@ function MainApp() {
       if (lastActive) {
         const now = Date.now();
         if (now - Number(lastActive) > INACTIVITY_TIMEOUT) {
-          alert('Sesi admin telah habis karena tidak ada aktivitas selama 15 menit. Anda otomatis keluar.');
+          alert('Sesi admin telah habis karena tidak ada aktivitas selama 5 menit. Anda otomatis keluar.');
           handleLogout();
         }
       }
